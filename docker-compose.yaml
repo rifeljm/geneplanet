@@ -1,0 +1,19 @@
+version: '3'
+services:
+  webpack:
+    build:
+      context: .
+    container_name: geneplanet_webpack
+    command: npm start
+    ports:
+      - "80:80"
+    volumes:
+      - '.:/app'
+      - '/app/node_modules'
+    environment:
+      - NODE_ENV=dev
+      - STRAVA_CLIENT_ID=${STRAVA_CLIENT_ID}
+      - STRAVA_CLIENT_SECRET=${STRAVA_CLIENT_SECRET}
+      - STRAVA_REDIRECT_URI=${STRAVA_REDIRECT_URI}
+    networks:
+      - default
