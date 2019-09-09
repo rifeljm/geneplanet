@@ -1,24 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import axios from 'axios';
 
-import { getCookie, stravaSvg, oauthEndpoint, stravaApiEndpoint } from '../common/utils.js';
+import { getCookie, isCookieValid, stravaSvg, oauthEndpoint, stravaApiEndpoint } from '../common/utils.js';
 
 import css from '../css/Home.css.js';
 
-/**
- * Check if we have Strava's cookie and if this cookie still valid
- * @return {Boolean}
- */
-function isCookieValid() {
-  if (getCookie('expires')) {
-    const isExpiredDate = new Date(parseInt(getCookie('expires'), 10) * 1000);
-    return isExpiredDate > new Date();
-  }
-  return false;
-}
-
-export default function Home({ activitiesToMetrics, stravaMetrics, isVisible, showDashboard }) {
+export default function Home({ stravaMetrics, isVisible, showDashboard, fetchMetrics }) {
   if (!isVisible) return null;
 
   function renderStravaStatus(stravaMetrics) {
@@ -52,13 +39,7 @@ export default function Home({ activitiesToMetrics, stravaMetrics, isVisible, sh
       document.location = `${oauthEndpoint}authorize?${oauthString}`;
     }
     if (isCookieValid()) {
-      const config = {
-        url: `${stravaApiEndpoint}athlete/activities`,
-        headers: { Authorization: `Bearer ${getCookie('access_token')}` },
-      };
-      return axios(config).then(res => {
-        activitiesToMetrics(res.data);
-      });
+      fetchMetrics();
     }
   }
 
@@ -73,7 +54,7 @@ export default function Home({ activitiesToMetrics, stravaMetrics, isVisible, sh
 }
 
 Home.propTypes = {
-  activitiesToMetrics: PropTypes.func.isRequired,
+  fetchMetrics: PropTypes.func.isRequired,
   stravaMetrics: PropTypes.array.isRequired,
   isVisible: PropTypes.bool.isRequired,
   showDashboard: PropTypes.func.isRequired,

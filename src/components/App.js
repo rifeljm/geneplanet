@@ -5,7 +5,7 @@ import AppBar from '@material-ui/core/AppBar';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 
-import { refreshAccessToken, getAccessToken, reduceActivitiesToMetrics } from '../common/utils.js';
+import { refreshAccessToken, getAccessToken, reduceActivitiesToMetrics, fetchStravaActivities, isCookieValid } from '../common/utils.js';
 import Home from './Home.js';
 import Dashboard from './Dashboard.js';
 
@@ -24,9 +24,19 @@ function App() {
         });
       }
     }
-    /* refresh access_token every hour */
+    /* refresh access_token every 3 hours, TODO: check expiration date of cookie first and fix this setInterval! */
     setInterval(() => {
       refreshAccessToken();
+    }, 3 * 3600 * 1000);
+
+    /* refresh metrics every hour */
+    setInterval(() => {
+      if (isCookieValid()) {
+        fetchMetrics();
+      } else {
+        /* TODO: "you have been logged out" message */
+        setStravaMetrics([]);
+      }
     }, 3600 * 1000);
   }, []);
 
@@ -34,7 +44,8 @@ function App() {
     setTabIndex(tabIndex);
   }
 
-  function activitiesToMetrics(activities) {
+  async function fetchMetrics() {
+    const activities = await fetchStravaActivities();
     const metrics = reduceActivitiesToMetrics(activities);
     setStravaMetrics(metrics);
   }
@@ -53,7 +64,7 @@ function App() {
         </Tabs>
       </AppBar>
       <css.Content>
-        <Home isVisible={tabIndex === 0} stravaMetrics={stravaMetrics} activitiesToMetrics={activitiesToMetrics} showDashboard={showDashboard} />
+        <Home isVisible={tabIndex === 0} stravaMetrics={stravaMetrics} showDashboard={showDashboard} fetchMetrics={fetchMetrics} />
         <Dashboard isVisible={tabIndex === 1} stravaMetrics={stravaMetrics} />
       </css.Content>
     </React.Fragment>

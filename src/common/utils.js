@@ -12,13 +12,20 @@ export function getCookies() {
   return cookie.parse(document.cookie) || {};
 }
 
+/**
+ * Returns previous month's first day
+ * @return {Date} [description]
+ */
 export function lastMonth() {
   let d = new Date();
   d.setDate(1);
   d.setMonth(d.getMonth() - 1);
   return d;
 }
-
+/**
+ * Only four possible cookies are valid to be parsed from document.cookie
+ * @return {string} value of cookie
+ */
 export function getCookie(type) {
   const stravaTokens = getCookies().strava;
   if (!stravaTokens) {
@@ -35,6 +42,9 @@ export function getCookie(type) {
   return obj[type];
 }
 
+/**
+ * If we have cookie, but this cookie will expire soon, get new access token, which will last longer
+ */
 export async function refreshAccessToken() {
   const secrets = {
     refresh_token: getCookie('refresh_token'),
@@ -46,6 +56,9 @@ export async function refreshAccessToken() {
   setCookies(res.data);
 }
 
+/**
+ * Get Strava's access token to use it when requesting API's data
+ */
 export async function getAccessToken(code, cb) {
   const secrets = {
     code,
@@ -77,6 +90,9 @@ function thisMonthActivities(activities) {
   });
 }
 
+/**
+ * all distances will be shown with the maximum of 1 decimal
+ */
 function mToKm(m) {
   return parseInt(m / 100, 10) / 10;
 }
@@ -108,4 +124,28 @@ export function reduceActivitiesToMetrics(activities) {
     `${avgSpeedLastMonth} km/h`,
     `${avgSpeedThisMonth} km/h`,
   ];
+}
+/**
+ * request Strava's activities API
+ */
+export function fetchStravaActivities() {
+  const config = {
+    url: `${stravaApiEndpoint}athlete/activities`,
+    headers: { Authorization: `Bearer ${getCookie('access_token')}` },
+  };
+  return axios(config).then(res => {
+    return res.data;
+  });
+}
+
+/**
+ * Check if we have Strava's cookie and if this cookie still valid
+ * @return {Boolean}
+ */
+export function isCookieValid() {
+  if (getCookie('expires')) {
+    const isExpiredDate = new Date(parseInt(getCookie('expires'), 10) * 1000);
+    return isExpiredDate > new Date();
+  }
+  return false;
 }
